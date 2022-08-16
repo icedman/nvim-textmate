@@ -321,7 +321,8 @@ int Textmate::load_theme(std::string path) {
     themes.clear();
     #endif
     themes.emplace_back(theme);
-    return themes.size() - 1;
+    set_theme(themes.size() - 1);
+    return current_theme_id;
   }
   return 0;
 }
@@ -358,7 +359,8 @@ int Textmate::load_theme_data(const char* data)
     themes.clear();
     #endif
     themes.emplace_back(theme);
-    return themes.size() - 1;
+    set_theme(themes.size() - 1);
+    return current_theme_id;
   }
   return 0;
 }

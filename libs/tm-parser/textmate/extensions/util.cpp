@@ -35,7 +35,7 @@
 
 #ifdef ENABLE_LOG
 #ifndef LOG_FILE
-#define LOG_FILE "./ashlar.log"
+#define LOG_FILE "/tmp/ashlar.log"
 #endif
 #endif
 

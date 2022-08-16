@@ -126,14 +126,14 @@ void load_extensions(const std::string _path,
     free(cpath);
 
     // Json::Value contribs;
-    // printf("loading extensions in %s\n", path.c_str());
+    log("loading extensions in %s\n", path.c_str());
     // std::vector<std::string> filter = { "themes", "iconThemes", "languages" };
 
     for (const auto& extensionPath : enumerate_dir(path)) {
         std::string package = extensionPath + "/package.json";
         std::string packageNLS = extensionPath + "/package.nls.json";
 
-        // printf("extension: %s\n", package.c_str());
+        // log("extension: %s\n", package.c_str());
 
         struct extension_t ex = { .id = "",
             .publisher = "",
@@ -160,7 +160,7 @@ void load_extensions(const std::string _path,
             ex.id += ex.package["name"].asString();
         }
 
-        // printf("%s\n", ex.id.c_str());
+        log("%s\n", ex.id.c_str());
 
         if (ex.package.isMember("__metadata") && ex.package["__metadata"].isMember("publisherDisplayName")) {
             publisher = ex.package["__metadata"]["publisherDisplayName"].asString();
@@ -533,10 +533,12 @@ theme_ptr theme_from_name(const std::string path,
     std::string ext_path = path;
     bool found = false;
 
+    log("finding theme %s", theme_path.c_str());
+
     // theme_path =
     // "C:\\Users\\iceman\\.editor\\extensions\\dracula-theme.theme-dracula-2.24.0\\theme\\dracula-soft.json";
 
-    if (!file_exists(theme_path.c_str()))
+    if (!file_exists(theme_path.c_str())) {
         for (auto& ext : extensions) {
             if (!ext.hasThemes)
                 continue;
@@ -551,13 +553,15 @@ theme_ptr theme_from_name(const std::string path,
                     theme_ui = theme["uiTheme"].asString();
                 }
 
+                // log("theme %s\n", theme["id"].asString().c_str());
+                    
                 if (theme["id"].asString() == theme_path || theme["label"].asString() == theme_path) {
                     theme_path = ext.path + "/" + theme["path"].asString();
                     if (theme.isMember("uiTheme") && uiTheme != "" && theme["uiTheme"].asString() != uiTheme) {
                         continue;
                     }
 
-                    // printf("theme: %s [%s]\n", ext.path.c_str(), theme_path.c_str());
+                    log("theme: %s [%s]\n", ext.path.c_str(), theme_path.c_str());
                     ext_path = ext.path;
                     found = true;
                     break;
@@ -569,6 +573,7 @@ theme_ptr theme_from_name(const std::string path,
                 break;
             }
         }
+    }
 
     Json::Value themeItem = parse::loadJson(theme_path);
 
