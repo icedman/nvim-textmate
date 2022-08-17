@@ -1,10 +1,11 @@
+#include "textmate.h"
+
 #include "extension.h"
 #include "grammar.h"
 #include "parse.h"
 #include "reader.h"
 #include "theme.h"
-
-#include "textmate.h"
+#include "util.h"
 
 #include <time.h>
 #define SKIP_PARSE_THRESHOLD 500
@@ -450,6 +451,7 @@ Textmate::run_highlighter(char *_text, language_info_ptr lang, theme_ptr theme,
 
   if (block) {
     block->parser_state = parser_state;
+    block->dirty = false;
   }
 
   std::map<size_t, scope::scope_t>::iterator it = scopes.begin();
@@ -577,3 +579,45 @@ void Textmate::shutdown()
   languages.clear(); 
   icons = nullptr;
 }
+
+void doc_data_t::update_blocks(int count, int start)
+{}
+
+// todo!!!
+void doc_data_t::add_block_at(int line)
+{}
+
+void doc_data_t::remove_block_at(int line)
+{}
+
+void doc_data_t::make_dirty()
+{
+  for(auto b : blocks) {
+    b->make_dirty();
+  }
+}
+
+block_data_ptr doc_data_t::block_at(int line)
+{
+  int idx = 0;
+  while (line >= blocks.size()) {
+    blocks.push_back(std::make_shared<block_data_t>());
+    if (idx++ > 100) break;
+  }
+
+  if (line >= 0 && line < blocks.size()) {
+    return blocks[line];
+  }
+  return nullptr;
+}
+
+block_data_ptr doc_data_t::previous_block(int line)
+{
+  return block_at(line-1);
+}
+
+block_data_ptr doc_data_t::next_block(int line)
+{
+  return block_at(line+1);
+}
+

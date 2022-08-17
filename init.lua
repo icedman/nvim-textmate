@@ -18,6 +18,10 @@ local api = vim.api
 local render_timer = nil
 local buffer_data = {}
 
+local hl_default_timeout = 50
+local hl_timeout_next_tick = 10
+local hl_timeout_after_change = 150
+
 local group = api.nvim_create_augroup("textmate", { clear = true })
 local enabled = false
 
@@ -48,8 +52,9 @@ function txmt_on_text_changed_i()
     local r,c = unpack(vim.api.nvim_win_get_cursor(0))
     local i = r - 1
     local lines = api.nvim_buf_get_lines(b, i, i+1, false)
+    module.highlight_make_line_dirty(i+1, b);
     txmt_highlight_current_line(i+1, lines[1])
-    -- txmt_deferred_highlight_current_buffer()
+    txmt_deferred_highlight_current_buffer(hl_timeout_after_change)
 end
 
 function txmt_highlight_enable()
@@ -59,13 +64,15 @@ function txmt_highlight_enable()
     module.highlight_set_extensions_dir(info.source:gsub('init.lua', 'extensions/'))
     module.highlight_load_theme('Dracula')
 
-    -- txmt_deferred_highlight_current_buffer(2500)
     -- highlight all open buffers
 
     enabled = true
 end
 
 function txmt_highlight_current_buffer()
+    if enabled ~= true then
+        txmt_highlight_enable()
+    end
     if txmt_set_language() ~= true then
         return
     end
@@ -100,7 +107,7 @@ function txmt_deferred_highlight_current_buffer(timeout)
     end
 
     if timeout == nil then
-        timeout =50
+        timeout = hl_default_timeout
     end
 
     render_timer = vim.defer_fn(
@@ -118,9 +125,14 @@ function txmt_highlight_current_line(n, l)
         return
     end
 
+    -- check is dirty block
+    if module.highlight_is_line_dirty(n, b) == 0 then
+        return
+    end
+
     api.nvim_buf_clear_namespace(b, 0, n-1, n)
     local langid = buffer_data[b]['langid']
-    local t = module.highlight_line(l, n, langid)
+    local t = module.highlight_line(l, n, langid, b)
     for i, style in ipairs(t) do
         local start = style[1]
         local length = style[2]
@@ -134,14 +146,13 @@ function txmt_highlight_current_line(n, l)
 end
 
 function txmt_on_buf_enter(args) 
-    txmt_deferred_highlight_current_buffer(250)
+    txmt_deferred_highlight_current_buffer(hl_timeout_next_tick)
 end
 
 function txmt_on_cursor_moved(args)
     txmt_deferred_highlight_current_buffer()
 end
 
-txmt_highlight_enable()
 api.nvim_create_autocmd("BufEnter", { group = group, callback = txmt_on_buf_enter })
 api.nvim_create_autocmd("TextChangedI", { group = group, callback = txmt_on_text_changed_i })
 api.nvim_create_autocmd("CursorMoved", { group = group, callback = txmt_on_cursor_moved })
