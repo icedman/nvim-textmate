@@ -38,9 +38,7 @@ struct block_data_t {
   bool prev_string_block;
   bool dirty;
 
-  virtual void make_dirty() {
-    dirty = true;
-  }
+  virtual void make_dirty();
 };
 
 typedef std::shared_ptr<block_data_t> block_data_ptr;
@@ -127,6 +125,13 @@ struct span_info_t {
   std::string scope;
 };
 
+struct list_item_t {
+  std::string name;
+  std::string description;
+  std::string icon;
+  std::string value;
+};
+
 struct Textmate {
   static void initialize(std::string path);
   static int load_theme(std::string path);
@@ -145,6 +150,7 @@ struct Textmate {
   static theme_info_t theme_info();
   static theme_ptr theme();
   static int set_theme(int id);
+  static std::vector<list_item_t> theme_extensions();
   static bool has_running_threads();
 
   static char* language_definition(int langId);

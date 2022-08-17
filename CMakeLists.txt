@@ -5,7 +5,8 @@ string(APPEND CMAKE_CXX_FLAGS " -std=gnu++11")
 set (CMAKE_CXX_STANDARD 11)
 
 add_definitions(-fPIC)
-add_definitions(-DENABLE_LOG)
+add_definitions(-DENABLE_LOG=1)
+# add_definitions(-DDISABLE_ADD_GRAMMAR_THREADS=1)
 
 add_library(onigmolib
   STATIC 

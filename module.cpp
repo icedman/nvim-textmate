@@ -12,7 +12,8 @@ extern "C" {
 
 #include <map>
 
-std::map<int, doc_data_ptr> docs;
+static std::map<int, doc_data_ptr> docs;
+static bool has_running_threads = false;
 
 int highlight_is_line_dirty(lua_State* L)
 {
@@ -33,6 +34,14 @@ int highlight_is_line_dirty(lua_State* L)
     }
 
     lua_pushnumber(L, 1);
+
+    bool _threads = Textmate::has_running_threads();
+    if (_threads != has_running_threads) {
+        for(auto d : docs) {
+            d.second->make_dirty();
+        }
+        has_running_threads = _threads;
+    }
     return 1;
 }
 
@@ -126,6 +135,9 @@ int highlight_load_theme(lua_State* L)
     int theme_id = Textmate::load_theme(p);
     log("highlight_load_theme");
     lua_pushnumber(L, theme_id);
+    for(auto d : docs) {
+        d.second->make_dirty();
+    }
     return 1;
 }
 
@@ -133,6 +145,9 @@ int highlight_set_theme(lua_State* L)
 {
     int id = lua_tonumber(L, -1);
     Textmate::set_theme(id);
+    for(auto d : docs) {
+        d.second->make_dirty();
+    }
     return 1;
 }
 
@@ -178,6 +193,28 @@ int highlight_remove_block(lua_State* L)
     return 1;
 }
 
+int highlight_themes(lua_State* L)
+{
+    std::vector<list_item_t> items = Textmate::theme_extensions();
+    lua_newtable(L);
+
+    int row = 1;
+    for (auto r : items) {
+        int col = 1;
+        lua_newtable(L);
+        lua_pushstring(L, r.name.c_str());
+        lua_rawseti(L, -2, col++);
+        lua_pushstring(L, r.description.c_str());
+        lua_rawseti(L, -2, col++);
+        lua_pushstring(L, r.value.c_str());
+        lua_rawseti(L, -2, col++);
+
+        lua_rawseti(L, -2, row++);
+    }
+
+    return 1;
+}
+
 EXPORT int luaopen_textmate(lua_State* L)
 {
     Textmate::load_theme_data(THEME_MONOKAI);
@@ -205,5 +242,8 @@ EXPORT int luaopen_textmate(lua_State* L)
     lua_setfield(L, -2, "highlight_add_block");
     lua_pushcfunction(L, highlight_remove_block);
     lua_setfield(L, -2, "highlight_remove_block");
+
+    lua_pushcfunction(L, highlight_themes);
+    lua_setfield(L, -2, "highlight_themes");
     return 1;
 }

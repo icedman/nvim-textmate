@@ -149,6 +149,44 @@ int Textmate::set_theme(int id)
   return id;
 }
 
+std::vector<list_item_t> Textmate::theme_extensions()
+{
+  std::vector<list_item_t> res;
+  for(auto ext : extensions) {
+      if (!ext.hasThemes)
+          continue;
+      Json::Value themes = ext.package["contributes"]["themes"];
+      for (int i = 0; i < themes.size(); i++) {
+            list_item_t item = {
+                .description = ext.package["description"].asString(),
+                .icon = ext.package["id"].asString(),
+                .value = ext.path + "/" + themes[i]["path"].asString()
+            };
+
+            if (item.name == "") {
+                item.name = themes[i]["label"].asString();
+            }
+            if (item.name == "") {
+                item.name = themes[i]["themeLabel"].asString();
+            }
+            if (item.name == "") {
+                item.name = themes[i]["id"].asString();
+            }
+
+            item.name = package_string(ext, item.name);
+            item.description = package_string(ext, item.description);
+
+            if (ext.publisher.length()) {
+                item.description += "\npublisher: ";
+                item.description += ext.publisher;
+            }
+
+            res.push_back(item);
+      }
+  }
+  return res;
+}
+
 theme_info_t Textmate::theme_info() {
   char _default[32] = "default";
   theme_info_t info;
@@ -591,7 +629,10 @@ void Textmate::shutdown()
   icons = nullptr;
 }
 
-// todo!!!
+void block_data_t::make_dirty() {
+  dirty = true;
+}
+
 void doc_data_t::add_block_at(int line)
 {
   blocks.insert(blocks.begin() + line, std::make_shared<block_data_t>());
