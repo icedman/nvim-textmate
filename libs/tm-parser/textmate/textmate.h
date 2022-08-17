@@ -49,7 +49,6 @@ typedef std::vector<block_data_ptr> block_data_list;
 struct doc_data_t {
   block_data_list blocks;
 
-  void update_blocks(int count, int start = 0);
   block_data_ptr block_at(int line);
   block_data_ptr previous_block(int line);
   block_data_ptr next_block(int line);

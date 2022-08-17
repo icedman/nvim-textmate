@@ -1,4 +1,3 @@
--- hack?
 local info = debug.getinfo(1,'S')
 local cpath = package.cpath
 
@@ -7,19 +6,24 @@ package.cpath = package.cpath ..
     ';' .. info.source:gsub('init.lua', '_build/textmate.so'):gsub('@', '') ..
     ';' .. info.source:gsub('init.lua', 'textmate.so'):gsub('@', '')
 
-local ok, module = pcall(require, 'textmate')
-if not ok then
-  -- not loaded
-end
 -- local module = require('textmate')
+
+local ok, module = pcall(require, 'textmate')
+
 package.cpath = cpath
+
+if not ok then
+    -- probably need to run cmake && make
+    return
+end
 
 local api = vim.api
 local render_timer = nil
+local changed_timer = nil
 local buffer_data = {}
 
 local hl_default_timeout = 50
-local hl_timeout_next_tick = 10
+local hl_timeout_next_tick = 0
 local hl_timeout_after_change = 150
 
 local group = api.nvim_create_augroup("textmate", { clear = true })
@@ -29,6 +33,10 @@ local function setup(parameters)
 end
 
 function txmt_set_language()
+    if enabled ~= true then
+        txmt_highlight_enable()
+    end
+
     local b = api.nvim_get_current_buf()
     if buffer_data[b] == nil then
         buffer_data[b] = {}
@@ -37,24 +45,73 @@ function txmt_set_language()
     local filetype = vim.bo.filetype
     buffer_data[b]['filetype'] = filetype
 
+    -- should exclude?
+
     if buffer_data[b]['langid'] == nil then
         local langid = module.highlight_load_language(vim.fn.expand('%'))
         buffer_data[b]['langid'] = langid
     end
 
+    if buffer_data[b]['langid'] == -1 then
+        return
+    end
+
     module.highlight_set_language(buffer_data[b]['langid'])
-    -- print(buffer_data[b]['langid'])
     return true
 end
 
-function txmt_on_text_changed_i()
+function txmt_on_text_changed_i() 
     local b = api.nvim_get_current_buf()
     local r,c = unpack(vim.api.nvim_win_get_cursor(0))
     local i = r - 1
     local lines = api.nvim_buf_get_lines(b, i, i+1, false)
-    module.highlight_make_line_dirty(i+1, b);
+  
+    local lc = api.nvim_buf_line_count(b)
+    local diff = 0
+    local changed_lines = 1
+    if buffer_data[b] ~= nil then
+        local last = buffer_data[b]['last_count']
+        buffer_data[b]['last_count'] = lc
+        if last ~= nil then
+          diff = lc - last
+          if diff > 0 then
+            changed_lines = diff
+            for nr=0,diff,1
+            do
+              module.highlight_add_block(nr);
+            end
+          end
+          if diff < 0 then
+            changed_lines = -diff
+            for nr=0,-diff,1
+            do
+              module.highlight_remove_block(nr);
+            end
+          end
+        end
+    end
+
+    for cl = 0,changed_lines,1
+    do
+      module.highlight_make_line_dirty(i+cl, b);
+    end
     txmt_highlight_current_line(i+1, lines[1])
     txmt_deferred_highlight_current_buffer(hl_timeout_after_change)
+end
+
+function txmt_on_text_changed()
+  -- txmt_on_text_changed_i()
+    if changed_timer ~= nil then
+        changed_timer:close()
+    end
+
+    changed_timer = vim.defer_fn(
+        function()
+            changed_timer = nil
+            txmt_on_text_changed_i()
+        end,
+        150
+    )
 end
 
 function txmt_highlight_enable()
@@ -63,24 +120,18 @@ function txmt_highlight_enable()
     module.highlight_set_extensions_dir(homedir .. '/.vscode/extensions/')
     module.highlight_set_extensions_dir(info.source:gsub('init.lua', 'extensions/'))
     module.highlight_load_theme('Dracula')
-
-    -- highlight all open buffers
-
     enabled = true
 end
 
 function txmt_highlight_current_buffer()
-    if enabled ~= true then
-        txmt_highlight_enable()
-    end
     if txmt_set_language() ~= true then
         return
     end
 
     local b = api.nvim_get_current_buf()
     local lc = api.nvim_buf_line_count(b)
-    local sr = 40 -- screen rows/2
-    
+    local sr = 50 -- screen rows
+
     local r,c = unpack(vim.api.nvim_win_get_cursor(0))
     local ls = r - sr
     local le = r + sr
@@ -91,8 +142,6 @@ function txmt_highlight_current_buffer()
     if le > lc then
         le = lc
     end
-
-    -- print(r .. ': ' .. ls .. ' - ' .. le)
 
     for i = ls, le-1, 1
     do
@@ -120,18 +169,21 @@ function txmt_deferred_highlight_current_buffer(timeout)
 end
 
 function txmt_highlight_current_line(n, l)
-    local b = api.nvim_get_current_buf()
     if txmt_set_language() ~= true then
         return
     end
 
-    -- check is dirty block
+    local b = api.nvim_get_current_buf()
+
     if module.highlight_is_line_dirty(n, b) == 0 then
         return
     end
 
     api.nvim_buf_clear_namespace(b, 0, n-1, n)
     local langid = buffer_data[b]['langid']
+    if langid == -1 then
+        return
+    end
     local t = module.highlight_line(l, n, langid, b)
     for i, style in ipairs(t) do
         local start = style[1]
@@ -146,6 +198,8 @@ function txmt_highlight_current_line(n, l)
 end
 
 function txmt_on_buf_enter(args) 
+    -- local b = api.nvim_get_current_buf()
+    -- local lc = api.nvim_buf_line_count(b)
     txmt_deferred_highlight_current_buffer(hl_timeout_next_tick)
 end
 
@@ -155,6 +209,7 @@ end
 
 api.nvim_create_autocmd("BufEnter", { group = group, callback = txmt_on_buf_enter })
 api.nvim_create_autocmd("TextChangedI", { group = group, callback = txmt_on_text_changed_i })
+api.nvim_create_autocmd("TextChanged", { group = group, callback = txmt_on_text_changed })
 api.nvim_create_autocmd("CursorMoved", { group = group, callback = txmt_on_cursor_moved })
 
 return {

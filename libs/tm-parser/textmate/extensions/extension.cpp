@@ -234,7 +234,7 @@ static bool load_language_configuration(const std::string path,
         return false;
     }
 
-    // lang->definition = root;
+    lang->definition = root;
 
     if (root.isMember("comments")) {
         Json::Value comments = root["comments"];

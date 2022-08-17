@@ -47,7 +47,7 @@ int highlight_make_line_dirty(lua_State* L) {
    doc_data_ptr doc = docs[docid];
    block_data_ptr block = doc->block_at(block_line);
    if (block) {
-      log(">>%d", block_line);
+      // log(">>%d", block_line);
       block->make_dirty();
    }
 
@@ -78,11 +78,6 @@ int highlight_line(lua_State* L) {
    block_data_ptr prev_block = doc->previous_block(block_line);
    block_data_ptr next_block = doc->next_block(block_line);
 
-// check dirty
-// run_highlighter(char *_text, language_info_ptr lang, theme_ptr theme,
-//                   block_data_t *block = NULL, block_data_t *prev = NULL,
-//                   block_data_t *next = NULL, std::vector<span_info_t> *span_infos = NULL);
-
    res = Textmate::run_highlighter((char*)code.c_str(), 
       Textmate::language(),
       Textmate::theme(),
@@ -91,7 +86,7 @@ int highlight_line(lua_State* L) {
       next_block ? next_block.get() : NULL
       );
 
-   // log("highlight_line");
+   // log("highlight_line %d", block_line);
 
    lua_newtable(L);
 
@@ -139,9 +134,9 @@ int highlight_set_theme(lua_State* L) {
 
 int highlight_load_language(lua_State* L) {
    const char* p = lua_tostring(L, -1);
-   int theme_id = Textmate::load_language(p);
-   log("highlight_load_language %s %d", p, theme_id);
-   lua_pushnumber(L, theme_id);
+   int lang_id = Textmate::load_language(p);
+   log("highlight_load_language %s %d", p, lang_id);
+   lua_pushnumber(L, lang_id);
    return 1;
 }
 
@@ -149,6 +144,30 @@ int highlight_set_language(lua_State* L) {
    int id = lua_tonumber(L, -1);
    Textmate::set_language(id);
    return 1;
+}
+
+int highlight_add_block(lua_State* L) {
+   int linenr = lua_tonumber(L, -2);
+   int docid = lua_tonumber(L, -1);
+
+   if (docs.find(docid) == docs.end()) {
+    return 1;
+   }
+
+  docs[docid]->add_block_at(linenr);
+  return 1;
+}
+
+int highlight_remove_block(lua_State* L) {
+   int linenr = lua_tonumber(L, -2);
+   int docid = lua_tonumber(L, -1);
+
+   if (docs.find(docid) == docs.end()) {
+    return 1;
+   }
+
+  docs[docid]->remove_block_at(linenr);
+  return 1;
 }
 
 EXPORT int luaopen_textmate(lua_State* L) {
@@ -172,5 +191,10 @@ EXPORT int luaopen_textmate(lua_State* L) {
    lua_setfield(L, -2, "highlight_is_line_dirty");
    lua_pushcfunction(L, highlight_make_line_dirty);
    lua_setfield(L, -2, "highlight_make_line_dirty");
+
+   lua_pushcfunction(L, highlight_add_block);
+   lua_setfield(L, -2, "highlight_add_block");
+   lua_pushcfunction(L, highlight_remove_block);
+   lua_setfield(L, -2, "highlight_remove_block");
    return 1;
 }

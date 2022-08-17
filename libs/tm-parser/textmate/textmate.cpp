@@ -336,6 +336,13 @@ int Textmate::load_icons(std::string path) {
 int Textmate::load_language(std::string path) {
   _previous_block_data.parser_state = NULL;
   language_info_ptr lang = language_from_file(path, extensions);
+  if (lang && !lang->grammar->document().isMember("patterns")) {
+    log("invalid language");
+    return -1;
+  }
+
+  // log(">%s", lang->grammar->document()["scopeName"].asString().c_str());
+
   if (lang != NULL) {
     #ifdef DISABLE_RESOURCE_CACHING
     languages.clear();
@@ -370,6 +377,10 @@ int Textmate::load_language_data(const char* data)
 {
   _previous_block_data.parser_state = NULL;
   language_info_ptr lang = language_from_file("", extensions, data);
+  if (lang && !lang->grammar->document().isMember("patterns")) {
+    log("invalid language");
+    return -1;
+  }
   if (lang != NULL) {
     #ifdef DISABLE_RESOURCE_CACHING
     languages.clear();
@@ -427,7 +438,7 @@ Textmate::run_highlighter(char *_text, language_info_ptr lang, theme_ptr theme,
   const char *last = first + l;
 
   parse::stack_ptr parser_state;
-  if (prev_block != NULL) {
+  if (block != NULL && prev_block != NULL) {
     parser_state = prev_block->parser_state;
     block->prev_comment_block = prev_block->comment_block;
     block->prev_string_block = prev_block->string_block;
@@ -580,15 +591,16 @@ void Textmate::shutdown()
   icons = nullptr;
 }
 
-void doc_data_t::update_blocks(int count, int start)
-{}
-
 // todo!!!
 void doc_data_t::add_block_at(int line)
-{}
+{
+  blocks.insert(blocks.begin() + line, std::make_shared<block_data_t>());
+}
 
 void doc_data_t::remove_block_at(int line)
-{}
+{
+  blocks.erase(blocks.begin() + line);
+}
 
 void doc_data_t::make_dirty()
 {
