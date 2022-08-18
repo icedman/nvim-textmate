@@ -1,29 +1,38 @@
 # nvim-textmate
-A textmate-based syntax highlighter to nvim, compatible with VScode
+A textmate-based syntax highlighter to nvim, compatible with VScode themes and grammars
 
 # install
 
-git clone http://github.com/icedman/nvim-textmate ~/.config/nvim/lua
-cd ~/.config/nvim/lua
+```sh
+git clone http://github.com/icedman/nvim-textmate ~/.config/nvim/lua/
+cd ~/.config/nvim/lua/
 mkdir build
 cd build
 cmake ../
 make
+```
+<br/>
 
 ```lua
 -- init.lua
 require('textmate')
 ```
 
---
+<br/>
+<br/>or with setup options<br/>
 
 
 ```lua
--- init.lua
-require('textmate').setup({quick_load = true})
+require('textmate').setup({
+    quick_load = true,
+    theme_name = 'Dracula'
+})
 ```
 
+## setup options
+
 * quick_load - defers loading of grammar and theme at the opening of a buffer 
+* theme_name - select a textmate format or vscode compatible theme
 
 # extensions
 

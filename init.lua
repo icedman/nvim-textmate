@@ -32,13 +32,24 @@ local hl_timeout_after_language_load = 1500
 
 local group = api.nvim_create_augroup("textmate", { clear = true })
 local enabled = true
-local initialized = false
-local quick_load
+local quick_load = false
+local theme_name = 'Monokai'
+local loaded_theme = nil
 
 local _txmt_highlight_current_buffer
 
+local function load_theme()
+	loaded_theme = theme_name
+	if not loaded_theme then
+		loaded_theme = 'Monokai'
+	end
+	module.highlight_load_theme(loaded_theme)
+end
+
 local function setup(parameters)
 	quick_load = parameters['quick_load']
+	theme_name = parameters['theme_name']
+	load_theme()
 end
 
 local function txmt_highlight_initialize()
@@ -46,16 +57,15 @@ local function txmt_highlight_initialize()
 	module.highlight_set_extensions_dir(homedir .. "/.editor/extensions/")
 	module.highlight_set_extensions_dir(homedir .. "/.vscode/extensions/")
 	module.highlight_set_extensions_dir(info.source:gsub("init.lua", "extensions/"):gsub("@", ""))
-	module.highlight_load_theme("Dracula")
-	initialized = true
 end
 
 local function txmt_set_language()
 	if enabled ~= true then
 		return false
 	end
-	if initialized ~= true then
-		txmt_highlight_initialize()
+
+	if not loaded_theme then
+		load_theme()
 	end
 
 	local b = api.nvim_get_current_buf()
@@ -277,6 +287,8 @@ api.nvim_create_user_command("TextMateTheme", txmt_set_theme, {
 	desc = "set textmate theme",
 	complete = txmt_on_set_theme_complete,
 })
+
+txmt_highlight_initialize()
 
 return {
 	setup = setup,

@@ -133,7 +133,7 @@ int highlight_load_theme(lua_State* L)
 {
     const char* p = lua_tostring(L, -1);
     int theme_id = Textmate::load_theme(p);
-    log("highlight_load_theme");
+    log("highlight_load_theme %s", p);
     lua_pushnumber(L, theme_id);
     for(auto d : docs) {
         d.second->make_dirty();
