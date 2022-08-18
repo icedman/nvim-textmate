@@ -217,8 +217,8 @@ int highlight_themes(lua_State* L)
 
 EXPORT int luaopen_textmate(lua_State* L)
 {
-    Textmate::load_theme_data(THEME_MONOKAI);
-    Textmate::load_language_data(GRAMMAR_CPP);
+    // Textmate::load_theme_data(THEME_MONOKAI);
+    // Textmate::load_language_data(GRAMMAR_CPP);
 
     lua_newtable(L);
     lua_pushcfunction(L, highlight_line);

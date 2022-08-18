@@ -33,9 +33,13 @@ local hl_timeout_after_language_load = 1500
 local group = api.nvim_create_augroup("textmate", { clear = true })
 local enabled = true
 local initialized = false
+local quick_load
 
-local function setup(parameters) end
 local _txmt_highlight_current_buffer
+
+local function setup(parameters)
+	quick_load = parameters['quick_load']
+end
 
 local function txmt_highlight_initialize()
 	local homedir = vim.fn.expand("~")
@@ -157,8 +161,11 @@ end
 local function txmt_on_buf_enter()
 	-- local b = api.nvim_get_current_buf()
 	-- local lc = api.nvim_buf_line_count(b)
-	-- txmt_highlight_current_buffer()
-	txmt_deferred_highlight_current_buffer(hl_timeout_next_tick)
+	if quick_load then
+		txmt_deferred_highlight_current_buffer(hl_timeout_next_tick)
+	else
+		txmt_highlight_current_buffer()
+	end
 end
 
 local function txmt_on_buf_delete()
