@@ -1,6 +1,8 @@
 # nvim-textmate
 A textmate-based syntax highlighter to nvim, compatible with VScode themes and grammars
 
+![Screen Shot](https://raw.githubusercontent.com/icedman/nvim-textmate/main/screenshots/Screenshot%20from%202022-08-18%2010-15-03.png)
+
 # install
 
 ```sh
