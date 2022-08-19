@@ -13,8 +13,13 @@ package.cpath = cpath
 
 if not ok then
 	return {
-		setup = function()
-			-- probably need to run cmake && make
+		setup = function(parameters)
+			vim.defer_fn(function()
+				local target_path = local_path .. "../../"
+				print("Compiling textmate module...")
+				vim.fn.system { "make", "build", "-C", target_path }
+				print("Done. Restart neovim.")
+			end, 500)
 		end,
 	}
 end
