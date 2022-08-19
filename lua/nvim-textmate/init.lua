@@ -165,7 +165,7 @@ local function txmt_highlight_current_line(n, l)
 		return
 	end
 	local _s = ""
-	local t = module.highlight_line(l .. "\n;", n, langid, b)
+	local t = module.highlight_line(l, n, langid, b)
 	for i, style in ipairs(t) do
 		local start = style[1]
 		local length = style[2]
@@ -367,7 +367,7 @@ api.nvim_create_user_command("TextMateTheme", txmt_set_theme, {
 	complete = txmt_on_set_theme_complete,
 })
 
-vim.cmd('syn off')
+--vim.cmd('syn off')
 txmt_highlight_initialize()
 
 return {

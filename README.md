@@ -6,14 +6,18 @@ A textmate-based syntax highlighter to nvim, compatible with VScode themes and g
 # install
 
 ```sh
-git clone http://github.com/icedman/nvim-textmate ~/.config/nvim/lua/
-cd ~/.config/nvim/lua/
-mkdir build
-cd build
-cmake ../
+git clone http://github.com/icedman/nvim-textmate
+cd nvim-textmate
 make
 ```
-<br/>
+
+# packer.nvim
+
+```lua
+use "icedman/nvim-textmate"
+```
+
+# setup
 
 ```lua
 -- init.lua
