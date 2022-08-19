@@ -1,0 +1,146 @@
+-- adopted from coloration
+
+local scope_hl_map = {
+ { "constant", "Constant" },
+ { "constant.numeric", "Number" },
+ { "constant.character", "Character" },
+ { "keyword", "Define" },
+ { "string", "String" },
+ { "string.other", "Label" },
+ { "comment", "Comment" },
+ { "declaration", "Conditional" },
+ { "control", "Conditional" },
+ { "operator", "Operator" },
+ { "directive", "PreProc" },
+ { "require", "Include" },
+ { "import", "Include" },
+ { "function", "Function" },
+ { "struct", "Structure" },
+ { "class", "Structure" },
+ { "storage.type", "Identifier" },
+ { "type", "StorageClass" },
+ { "modifier", "StorageClass" },
+ { "namespace", "StorageClass" },
+ { "scope", "StorageClass" },
+ { "name.type", "Variable" },
+ { "tag", "Tag" },
+ { "name.tag", "StorageClass" },
+ { "attribute", "Variable" },
+ { "property", "Variable" },
+ { "heading", "markdownH1" }
+}
+
+--[[
+local scope_hl_map = {
+	-- general colors for all languages
+	-- { "Normal"      ,  Style.new(:fg ,  @ui["foreground"], :bg ,  @ui["background"]) },
+	{ "Boolean", "constant.language" },
+	{ "Character", "constant.character" },
+	{ "Comment", "comment" },
+	{ "Conditional", "keyword.control" },
+	{ "Constant", "constant" },
+	-- "Debug" ,  [],
+	{ "Define", "keyword" },
+	-- "Delimiter" ,  "meta.separator",
+	-- { "DiffAdd"     ,  Style.new(:bg ,  green.mix_with(@ui['background'], 80), :fg ,  @ui['foreground'], :bold ,  true) },
+	-- { "DiffDelete"  ,  Style.new(:fg ,  red.mix_with(@ui['background'], 80)) },
+	-- { "DiffChange"  ,  Style.new(:bg ,  blue.mix_with(@ui['background'], 50), :fg ,  @ui['foreground']) },
+	-- { "DiffText"    ,  Style.new(:bg ,  blue.mix_with(@ui['background'], 100), :fg ,  @ui['foreground'], :bold ,  true) },
+	{ "ErrorMsg", "invalid" },
+	{ "WarningMsg", "invalid" },
+	-- "Exception" ,  [],
+	{ "Float", "constant.numeric" },
+	{ "Function", "entity.name.function" },
+	{ "Identifier", "storage.type" },
+	-- "Include" ,  [],
+	{ "Keyword", "keyword" },
+	{ "Label", "string.other" },
+	-- "Macro" ,  [],
+	-- { "NonText"     ,  Style.new(:fg ,  @ui["invisibles"], :bg ,  @ui["background"].mix_with(@ui["foreground"], 95)) },
+	{ "Number", "constant.numeric" },
+	{ "Operator", "keyword.operator" },
+	-- "PreCondit" ,  [],
+	{ "PreProc", "keyword.other" },
+	-- "Repeat" ,  [],
+	-- { "Special"     ,  Style.new(:fg ,  @ui["foreground"]) },
+	-- "SpecialChar" ,  [],
+	-- "SpecialComment" ,  [],
+	-- { "SpecialKey"   ,  Style.new(:fg ,  @ui["invisibles"], :bg ,  bg_line_color) },
+	{ "Statement", "keyword.control" },
+	{ "StorageClass", "storage.type" },
+	{ "String", "string,string.quoted" },
+	-- "Structure" ,  [],
+	{ "Tag", "entity.name.tag" },
+	-- { "Title"        ,  Style.new(:fg ,  @ui["foreground"], :bold ,  true) },
+	-- { "Todo"         ,  (@items["comment"] || default_style).clone.tap { |c| c.inverse = true; c.bold = true } },
+	{ "Type", "entity.name.type" },
+	-- "Typedef" ,  [],
+	-- { "Underlined"   ,  Style.new(:underline ,  true) },
+
+	-- ruby
+	{ "rubyClass", "keyword.controll.class.ruby" },
+	{ "rubyFunction", "entity.name.function.ruby" },
+	{ "rubyInterpolationDelimiter", "" },
+	{ "rubySymbol", "constant.other.symbol.ruby" },
+	{ "rubyConstant", "support.class" },
+	{ "rubyStringDelimiter", "string,string.quoted" },
+	{ "rubyBlockParameter", "variable.parameter" },
+	{ "rubyInstanceVariable", "variable.language" },
+	{ "rubyInclude", "keyword.other.special-method.ruby" },
+	{ "rubyGlobalVariable", "variable.other" },
+	{ "rubyRegexp", "string.regexp" },
+	{ "rubyRegexpDelimiter", "string.regexp" },
+	{ "rubyEscape", "constant.character.escape" },
+	{ "rubyControl", "keyword.control" },
+	{ "rubyClassVariable", "variable" },
+	{ "rubyOperator", "keyword.operator" },
+	{ "rubyException", "keyword.other.special-method.ruby" },
+	{ "rubyPseudoVariable", "variable.language.ruby" },
+
+	-- rails
+	{ "rubyRailsUserClass", "support.class.ruby" },
+	{ "rubyRailsARAssociationMethod", "support.function.activerecord.rails" },
+	{ "rubyRailsARMethod", "support.function.activerecord.rails" },
+	{ "rubyRailsRenderMethod", "support.function" },
+	{ "rubyRailsMethod", "support.function" },
+
+	-- eruby
+	{ "erubyDelimiter", "punctuation.section.embedded.ruby" },
+	{ "erubyComment", "comment" },
+	{ "erubyRailsMethod", "support.function" },
+	-- "erubyExpression" ,  "text.html.ruby source",
+	-- "erubyDelimiter" ,  "",
+
+	-- html
+	{ "htmlTag", "meta.tag entity" },
+	{ "htmlEndTag", "meta.tag entity" },
+	{ "htmlTagName", "meta.tag entity" },
+	{ "htmlArg", "meta.tag entity" },
+	{ "htmlSpecialChar", "constant.character.entity.html" },
+
+	-- javascript
+	{ "javaScriptFunction", "storage.type.function.js" },
+	{ "javaScriptRailsFunction", "support.function" },
+	{ "javaScriptBraces", "meta.brace.curly.js" },
+
+	-- yaml
+	{ "yamlKey", "entity.name.tag.yaml" },
+	{ "yamlAnchor", "variable.other.yaml" },
+	{ "yamlAlias", "variable.other.yaml" },
+	{ "yamlDocumentHeader", "string.unquoted.yaml" },
+
+	-- css
+	{ "cssURL", "variable.parameter.misc.css" },
+	{ "cssFunctionName", "support.function.misc.css" },
+	{ "cssColor", "constant.other.color.rgb-value.css" },
+	{ "cssPseudoClassId", "entity.other.attribute-name.pseudo-class.css" },
+	{ "cssClassName", "entity.other.attribute-name.class.css" },
+	{ "cssValueLength", "constant.numeric.css" },
+	{ "cssCommonAttr", "support.constant.property-value.css" },
+	{ "cssBraces", "punctuation.section.property-list.css" },
+}
+]]
+
+return {
+	scope_hl_map = scope_hl_map,
+}
