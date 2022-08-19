@@ -190,6 +190,15 @@ std::vector<list_item_t> Textmate::theme_extensions()
 theme_info_t Textmate::theme_info() {
   char _default[32] = "default";
   theme_info_t info;
+  color_info_t fallback;
+
+  {
+    rgba_t tc = theme_color_from_scope_fg_bg(_default);
+    fallback.red = (float)tc.r / 255;
+    fallback.green = (float)tc.g / 255;
+    fallback.blue = (float)tc.b / 255;
+  }
+
   color_info_t fg;
   if (current_theme()) {
     current_theme()->theme_color("editor.foreground", fg);
@@ -197,10 +206,7 @@ theme_info_t Textmate::theme_info() {
       current_theme()->theme_color("foreground", fg);
     }
     if (fg.is_blank()) {
-      rgba_t tc = theme_color_from_scope_fg_bg(_default);
-      fg.red = (float)tc.r / 255;
-      fg.green = (float)tc.g / 255;
-      fg.blue = (float)tc.b / 255;
+      fg = fallback;
     }
   }
 
@@ -227,8 +233,9 @@ theme_info_t Textmate::theme_info() {
   bg.blue *= 255;
 
   color_info_t sel;
-  if (current_theme())
+  if (current_theme()) {
     current_theme()->theme_color("editor.selectionBackground", sel);
+  }
   sel.red *= 255;
   sel.green *= 255;
   sel.blue *= 255;
@@ -239,13 +246,7 @@ theme_info_t Textmate::theme_info() {
     style_t style = current_theme()->styles_for_scope("comment");
     cmt = style.foreground;
     if (cmt.is_blank()) {
-      current_theme()->theme_color("editor.foreground", cmt);
-    }
-    if (cmt.is_blank()) {
-      rgba_t tc = theme_color_from_scope_fg_bg(_default, false);
-      cmt.red = (float)tc.r / 255;
-      cmt.green = (float)tc.g / 255;
-      cmt.blue = (float)tc.b / 255;
+      cmt = fallback;   
     }
   }
 
@@ -260,13 +261,7 @@ theme_info_t Textmate::theme_info() {
     style_t style = current_theme()->styles_for_scope("entity.name.function");
     fn = style.foreground;
     if (fn.is_blank()) {
-      current_theme()->theme_color("editor.foreground", fn);
-    }
-    if (fn.is_blank()) {
-      rgba_t tc = theme_color_from_scope_fg_bg(_default, false);
-      fn.red = (float)tc.r / 255;
-      fn.green = (float)tc.g / 255;
-      fn.blue = (float)tc.b / 255;
+      fn = fallback;
     }
   }
 
@@ -280,13 +275,7 @@ theme_info_t Textmate::theme_info() {
     style_t style = current_theme()->styles_for_scope("keyword");
     kw = style.foreground;
     if (kw.is_blank()) {
-      current_theme()->theme_color("editor.foreground", kw);
-    }
-    if (kw.is_blank()) {
-      rgba_t tc = theme_color_from_scope_fg_bg(_default, false);
-      kw.red = (float)tc.r / 255;
-      kw.green = (float)tc.g / 255;
-      kw.blue = (float)tc.b / 255;
+      kw = fallback;
     }
   }
 
@@ -300,13 +289,7 @@ theme_info_t Textmate::theme_info() {
     style_t style = current_theme()->styles_for_scope("variable");
     var = style.foreground;
     if (var.is_blank()) {
-      current_theme()->theme_color("editor.foreground", var);
-    }
-    if (var.is_blank()) {
-      rgba_t tc = theme_color_from_scope_fg_bg(_default, false);
-      var.red = (float)tc.r / 255;
-      var.green = (float)tc.g / 255;
-      var.blue = (float)tc.b / 255;
+      var = fallback;
     }
   }
 
@@ -314,6 +297,47 @@ theme_info_t Textmate::theme_info() {
   var.green *= 255;
   var.blue *= 255;
 
+  color_info_t typ;
+  if (current_theme()) {
+    // current_theme()->theme_color("comment", var);
+    style_t style = current_theme()->styles_for_scope("type");
+    typ = style.foreground;
+    if (typ.is_blank()) {
+      typ = fallback;
+    }
+  }
+
+  typ.red *= 255;
+  typ.green *= 255;
+  typ.blue *= 255;
+
+  color_info_t strct;
+  if (current_theme()) {
+    // current_theme()->theme_color("comment", var);
+    style_t style = current_theme()->styles_for_scope("type");
+    strct = style.foreground;
+    if (strct.is_blank()) {
+      strct = fallback;
+    }
+  }
+
+  strct.red *= 255;
+  strct.green *= 255;
+  strct.blue *= 255;
+  
+  color_info_t ctrl;
+  if (current_theme()) {
+    // current_theme()->theme_color("comment", var);
+    style_t style = current_theme()->styles_for_scope("control");
+    ctrl = style.foreground;
+    if (strct.is_blank()) {
+      ctrl = fallback;
+    }
+  }
+
+  strct.red *= 255;
+  strct.green *= 255;
+  strct.blue *= 255;
   info.fg_r = fg.red;
   info.fg_g = fg.green;
   info.fg_b = fg.blue;
@@ -342,7 +366,19 @@ theme_info_t Textmate::theme_info() {
   info.var_g = var.green;
   info.var_b = var.blue;
   info.var_a = color_info_t::nearest_color_index(var.red, var.green, var.blue);
-
+  info.type_r = var.red;
+  info.type_g = var.green;
+  info.type_b = var.blue;
+  info.type_a = color_info_t::nearest_color_index(typ.red, typ.green, typ.blue);
+  info.struct_r = var.red;
+  info.struct_g = var.green;
+  info.struct_b = var.blue;
+  info.struct_a = color_info_t::nearest_color_index(strct.red, strct.green, strct.blue);
+  info.ctrl_r = ctrl.red;
+  info.ctrl_g = ctrl.green;
+  info.ctrl_b = ctrl.blue;
+  info.ctrl_a = color_info_t::nearest_color_index(ctrl.red, ctrl.green, ctrl.blue);
+  
   // why does this happen?
   if (info.sel_r < 0 && info.sel_g < 0 && info.sel_b < 0) {
     info.sel_r *= -1;
@@ -512,7 +548,11 @@ Textmate::run_highlighter(char *_text, language_info_ptr lang, theme_ptr theme,
     n = it->first;
     scope::scope_t scope = it->second;
     std::string scopeName(scope);
-    style_t style = theme->styles_for_scope(scopeName);
+    style_t style;
+
+    if (span_infos == NULL) {
+      style = theme->styles_for_scope(scopeName);
+    }
 
     scopeName = scope.back();
     // printf(">%s %d\n", scopeName.c_str());
@@ -560,6 +600,7 @@ Textmate::run_highlighter(char *_text, language_info_ptr lang, theme_ptr theme,
   }
 
   int idx = 0;
+  if (!span_infos) {
   for (int i = 0; i < l && i < MAX_STYLED_SPANS; i++) {
     textstyle_t _ts = construct_style(spans, i);
     textstyle_t *prev = NULL;
@@ -581,6 +622,7 @@ Textmate::run_highlighter(char *_text, language_info_ptr lang, theme_ptr theme,
     } else {
       textstyle_buffer.push_back(_ts);
     }
+  }
   }
 
   if (!block) return textstyle_buffer;

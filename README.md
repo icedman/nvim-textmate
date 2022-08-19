@@ -27,7 +27,8 @@ require('textmate')
 ```lua
 require('textmate').setup({
     quick_load = true,
-    theme_name = 'Dracula'
+    theme_name = 'Dracula',
+    override_colorscheme = false
 })
 ```
 
@@ -35,6 +36,7 @@ require('textmate').setup({
 
 * quick_load - defers loading of grammar and theme at the opening of a buffer 
 * theme_name - select a textmate format or vscode compatible theme
+* override_colorscheme - apply colorscheme from textmate theme
 
 # extensions
 

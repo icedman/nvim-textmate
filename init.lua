@@ -1,13 +1,18 @@
 local info = debug.getinfo(1, "S")
 local cpath = package.cpath
 
+local local_path = info.source:gsub("init.lua", ""):gsub("@", "")
+
 package.cpath = package.cpath
 	.. ";"
-	.. info.source:gsub("init.lua", "build/textmate.so"):gsub("@", "")
+	.. local_path
+	.. "build/textmate.so"
 	.. ";"
-	.. info.source:gsub("init.lua", "_build/textmate.so"):gsub("@", "")
+	.. local_path
+	.. "_build/textmate.so"
 	.. ";"
-	.. info.source:gsub("init.lua", "textmate.so"):gsub("@", "")
+	.. local_path
+	.. "textmate.so"
 
 -- local module = require('textmate')
 
@@ -19,6 +24,31 @@ if not ok then
 	-- probably need to run cmake && make
 	return
 end
+
+local scope_to_hl_map = {
+	{ "string", "String" },
+	{ "comment", "Comment" },
+	{ "constant", "Number" },
+	{ "declaration", "Conditional" },
+	{ "control", "Conditional" },
+	{ "operator", "Operator" },
+	{ "directive", "PreProc" },
+	{ "require", "Include" },
+	{ "import", "Include" },
+	{ "function", "Function" },
+	{ "struct", "Structure" },
+	{ "class", "Structure" },
+	{ "type", "StorageClass" },
+	{ "modifier", "StorageClass" },
+	{ "namespace", "StorageClass" },
+	{ "scope", "StorageClass" },
+	{ "name.type", "Variable" },
+	{ "tag", "Tag" },
+	{ "name.tag", "StorageClass" },
+	{ "attribute", "Variable" },
+	{ "property", "Variable" },
+	{ "heading", "markdownH1" },
+}
 
 local api = vim.api
 local render_timer = nil
@@ -32,23 +62,68 @@ local hl_timeout_after_language_load = 1500
 
 local group = api.nvim_create_augroup("textmate", { clear = true })
 local enabled = true
-local quick_load = false
-local theme_name = 'Monokai'
 local loaded_theme = nil
-
 local _txmt_highlight_current_buffer
 
-local function load_theme()
-	loaded_theme = theme_name
+-- setup options
+local quick_load = false
+local theme_name = "Monokai"
+local override_colorscheme = false
+
+local function load_theme()	
+	if not override_colorscheme then
+    if not loaded_theme then
+      module.highlight_load_theme("")
+      loaded_theme = "-"
+    end
+    return
+  end
+
+  loaded_theme = theme_name
 	if not loaded_theme then
-		loaded_theme = 'Monokai'
+		loaded_theme = "Monokai"
 	end
 	module.highlight_load_theme(loaded_theme)
+
+		local theme = module.highlight_theme_info()
+		-- vim.pretty_print(theme)
+		local normal_fg = string.format("#%02x%02x%02x", theme[1], theme[2], theme[3])
+		local normal_bg = string.format("#%02x%02x%02x", theme[4], theme[5], theme[6])
+		local sel_fg = string.format("#%02x%02x%02x", theme[7], theme[8], theme[9])
+		local cmt_fg = string.format("#%02x%02x%02x", theme[10], theme[11], theme[12])
+		local fn_fg = string.format("#%02x%02x%02x", theme[13], theme[14], theme[15])
+		local kw_fg = string.format("#%02x%02x%02x", theme[16], theme[17], theme[18])
+		local var_fg = string.format("#%02x%02x%02x", theme[19], theme[20], theme[21])
+		local typ_fg = string.format("#%02x%02x%02x", theme[22], theme[23], theme[24])
+		local strct_fg = string.format("#%02x%02x%02x", theme[25], theme[26], theme[27])
+		local ctrl_fg = string.format("#%02x%02x%02x", theme[28], theme[29], theme[30])
+		api.nvim_set_hl(0, "Normal", { bg = normal_bg })
+		api.nvim_set_hl(0, "NormalNC", { bg = normal_bg })
+		api.nvim_set_hl(0, "LineNr", { fg = cmt_fg })
+		api.nvim_set_hl(0, "Comment", { fg = cmt_fg })
+		api.nvim_set_hl(0, "Function", { fg = fn_fg })
+		api.nvim_set_hl(0, "Statement", { fg = fn_fg })
+		api.nvim_set_hl(0, "Method", { fg = fn_fg })
+		api.nvim_set_hl(0, "Keyword", { fg = kw_fg })
+		api.nvim_set_hl(0, "Define", { fg = kw_fg })
+		api.nvim_set_hl(0, "Include", { fg = kw_fg })
+		api.nvim_set_hl(0, "Variable", { fg = var_fg })
+		api.nvim_set_hl(0, "Identifier", { fg = var_fg })
+		api.nvim_set_hl(0, "Boolean", { fg = var_fg })
+		api.nvim_set_hl(0, "Character", { fg = var_fg })
+		api.nvim_set_hl(0, "String", { fg = var_fg })
+		api.nvim_set_hl(0, "Number", { fg = var_fg })
+		api.nvim_set_hl(0, "Type", { fg = typ_fg })
+		api.nvim_set_hl(0, "Struct", { fg = strct_fg })
+		api.nvim_set_hl(0, "Structure", { fg = strct_fg })
+		api.nvim_set_hl(0, "StorageClass", { fg = strct_fg })
+		--api.nvim_set_hl(0, "Conditional", { fg = ctrl_fg })
 end
 
 local function setup(parameters)
-	quick_load = parameters['quick_load']
-	theme_name = parameters['theme_name']
+	quick_load = parameters["quick_load"]
+	theme_name = parameters["theme_name"]
+	override_colorscheme = parameters["override_colorscheme"]
 	load_theme()
 end
 
@@ -110,17 +185,37 @@ local function txmt_highlight_current_line(n, l)
 	if langid == -1 then
 		return
 	end
-	local t = module.highlight_line(l, n, langid, b)
+	local _s = ""
+	local t = module.highlight_line(l .. "\n;", n, langid, b)
 	for i, style in ipairs(t) do
 		local start = style[1]
 		local length = style[2]
 		local rr = style[3]
 		local gg = style[4]
 		local bb = style[5]
-		local clr = string.format("%02x%02x%02x", rr, gg, bb)
-		api.nvim_set_hl(0, clr, { fg = "#" .. clr })
-		api.nvim_buf_add_highlight(b, 0, clr, n - 1, start, start + length)
+		local scope = style[6]
+		_s = _s .. start .. " - " .. length .. "; " .. scope .. ";"
+
+		if not override_colorscheme then
+			local hl = nil
+			for j, map in ipairs(scope_to_hl_map) do
+				if string.find(scope, map[1]) then
+					hl = map[2]
+				end
+			end
+			if hl then
+				api.nvim_buf_add_highlight(b, 0, hl, n - 1, start, start + length)
+			end
+		else
+			local clr = string.format("%02x%02x%02x", rr, gg, bb)
+			if clr and clr:len() < 8 then
+				api.nvim_set_hl(0, clr, { fg = "#" .. clr })
+				api.nvim_buf_add_highlight(b, 0, clr, n - 1, start, start + length)
+			end
+		end
 	end
+
+	--print(_s)
 end
 
 local function txmt_highlight_current_buffer()
@@ -185,7 +280,8 @@ local function txmt_on_buf_delete()
 end
 
 local function txmt_on_cursor_moved()
-	txmt_deferred_highlight_current_buffer()
+	txmt_highlight_current_buffer()
+	-- txmt_deferred_highlight_current_buffer()
 end
 
 local function txmt_on_text_changed_i()
@@ -258,7 +354,10 @@ api.nvim_create_user_command(
 )
 
 local function txmt_set_theme(opts)
-	module.highlight_load_theme(opts.args)
+	override_colorscheme = true
+	theme_name = opts.args
+	loaded_theme = nil
+	-- module.highlight_load_theme(opts.args)
 	-- all buffers
 	txmt_deferred_highlight_current_buffer()
 end
@@ -288,6 +387,7 @@ api.nvim_create_user_command("TextMateTheme", txmt_set_theme, {
 	complete = txmt_on_set_theme_complete,
 })
 
+-- vim.cmd('syn off')
 txmt_highlight_initialize()
 
 return {

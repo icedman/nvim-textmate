@@ -37,7 +37,7 @@ int highlight_is_line_dirty(lua_State* L)
 
     bool _threads = Textmate::has_running_threads();
     if (_threads != has_running_threads) {
-        for(auto d : docs) {
+        for (auto d : docs) {
             d.second->make_dirty();
         }
         has_running_threads = _threads;
@@ -89,30 +89,34 @@ int highlight_line(lua_State* L)
     block_data_ptr prev_block = doc->previous_block(block_line);
     block_data_ptr next_block = doc->next_block(block_line);
 
+    std::vector<span_info_t> spans;
     res = Textmate::run_highlighter((char*)code.c_str(),
         Textmate::language(),
         Textmate::theme(),
         block ? block.get() : NULL,
         prev_block ? prev_block.get() : NULL,
-        next_block ? next_block.get() : NULL);
+        next_block ? next_block.get() : NULL,
+        &spans);
 
     // log("highlight_line %d", block_line);
 
     lua_newtable(L);
 
     int row = 1;
-    for (auto r : res) {
+    for (auto r : spans) {
         int col = 1;
         lua_newtable(L);
         lua_pushnumber(L, r.start);
         lua_rawseti(L, -2, col++);
         lua_pushnumber(L, r.length);
         lua_rawseti(L, -2, col++);
-        lua_pushnumber(L, r.r);
+        lua_pushnumber(L, r.fg.r);
         lua_rawseti(L, -2, col++);
-        lua_pushnumber(L, r.g);
+        lua_pushnumber(L, r.fg.g);
         lua_rawseti(L, -2, col++);
-        lua_pushnumber(L, r.b);
+        lua_pushnumber(L, r.fg.b);
+        lua_rawseti(L, -2, col++);
+        lua_pushstring(L, r.scope.c_str());
         lua_rawseti(L, -2, col++);
 
         lua_rawseti(L, -2, row++);
@@ -135,7 +139,7 @@ int highlight_load_theme(lua_State* L)
     int theme_id = Textmate::load_theme(p);
     log("highlight_load_theme %s", p);
     lua_pushnumber(L, theme_id);
-    for(auto d : docs) {
+    for (auto d : docs) {
         d.second->make_dirty();
     }
     return 1;
@@ -145,7 +149,7 @@ int highlight_set_theme(lua_State* L)
 {
     int id = lua_tonumber(L, -1);
     Textmate::set_theme(id);
-    for(auto d : docs) {
+    for (auto d : docs) {
         d.second->make_dirty();
     }
     return 1;
@@ -215,6 +219,77 @@ int highlight_themes(lua_State* L)
     return 1;
 }
 
+int highlight_theme_info(lua_State* L)
+{
+    lua_newtable(L);
+
+    theme_info_t theme = Textmate::theme_info();
+
+    int col = 1;
+    lua_newtable(L);
+    lua_pushnumber(L, theme.fg_r); // 1
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.fg_g);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.fg_b);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.bg_r); // 4
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.bg_g);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.bg_b);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.sel_r); // 7
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.sel_g);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.sel_b);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.cmt_r); // 10
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.cmt_g);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.cmt_b);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.fn_r); // 13
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.fn_g);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.fn_b);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.kw_r); // 16
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.kw_g);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.kw_b);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.var_r); // 17
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.var_g);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.var_b);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.type_r); // 20
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.type_g);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.type_b);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.struct_r); // 23
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.struct_g);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.struct_b);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.ctrl_r); // 26
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.ctrl_g);
+    lua_rawseti(L, -2, col++);
+    lua_pushnumber(L, theme.ctrl_b);
+    lua_rawseti(L, -2, col++);
+    return 1;
+}
+
 EXPORT int luaopen_textmate(lua_State* L)
 {
     // Textmate::load_theme_data(THEME_MONOKAI);
@@ -245,5 +320,7 @@ EXPORT int luaopen_textmate(lua_State* L)
 
     lua_pushcfunction(L, highlight_themes);
     lua_setfield(L, -2, "highlight_themes");
+    lua_pushcfunction(L, highlight_theme_info);
+    lua_setfield(L, -2, "highlight_theme_info");
     return 1;
 }

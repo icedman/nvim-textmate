@@ -23,8 +23,6 @@
 #define SCOPE_ENTITY_CLASS (1 << 14)
 #define SCOPE_ENTITY_FUNCTION (1 << 15)
 
-// class Block;
-
 struct block_data_t {
   block_data_t()
       : parser_state(nullptr), comment_block(false), prev_comment_block(false),
@@ -93,6 +91,18 @@ struct theme_info_t {
   int16_t var_g;
   int16_t var_b;
   int16_t var_a;
+  int16_t type_r;
+  int16_t type_g;
+  int16_t type_b;
+  int16_t type_a;
+  int16_t struct_r;
+  int16_t struct_g;
+  int16_t struct_b;
+  int16_t struct_a;
+  int16_t ctrl_r;
+  int16_t ctrl_g;
+  int16_t ctrl_b;
+  int16_t ctrl_a;
 };
 
 struct textstyle_t {
