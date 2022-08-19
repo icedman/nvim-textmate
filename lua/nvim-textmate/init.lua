@@ -13,8 +13,13 @@ package.cpath = cpath
 
 if not ok then
 	return {
-		setup = function()
-			-- probably need to run cmake && make
+		setup = function(parameters)
+			vim.defer_fn(function()
+				local target_path = local_path .. "../../"
+				print("Compiling textmate module...")
+				vim.fn.system { "make", "build", "-C", target_path }
+				print("Done. Restart neovim.")
+			end, 500)
 		end,
 	}
 end
@@ -168,7 +173,7 @@ local function txmt_highlight_current_line(n, l)
 		local gg = style[4]
 		local bb = style[5]
 		local scope = style[6]
-		_s = _s .. start .. " - " .. length .. "; " .. scope .. ";"
+		-- _s = _s .. start .. " - " .. length .. "; " .. scope .. ";"
 
 		if not override_colorscheme then
 			local hl = nil
@@ -331,8 +336,9 @@ local function txmt_set_theme(opts)
 	override_colorscheme = true
 	theme_name = opts.args
 	loaded_theme = nil
-	-- module.highlight_load_theme(opts.args)
-	-- all buffers
+
+	load_theme()
+	
 	txmt_deferred_highlight_current_buffer()
 end
 

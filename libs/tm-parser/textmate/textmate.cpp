@@ -548,11 +548,7 @@ Textmate::run_highlighter(char *_text, language_info_ptr lang, theme_ptr theme,
     n = it->first;
     scope::scope_t scope = it->second;
     std::string scopeName(scope);
-    style_t style;
-
-    if (span_infos == NULL) {
-      style = theme->styles_for_scope(scopeName);
-    }
+    style_t style = theme->styles_for_scope(scopeName);
 
     scopeName = scope.back();
     // printf(">%s %d\n", scopeName.c_str());
