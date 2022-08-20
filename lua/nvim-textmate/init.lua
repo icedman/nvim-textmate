@@ -1,4 +1,4 @@
-local Map = require "nvim-textmate.colormap"
+local Map = require("nvim-textmate.colormap")
 
 local info = debug.getinfo(1, "S")
 local cpath = package.cpath
@@ -16,8 +16,10 @@ if not ok then
 		setup = function(parameters)
 			vim.defer_fn(function()
 				local target_path = local_path .. "../../"
+				print("Configuring textmate module...")
+				vim.fn.system({ "make", "prebuild", "-C", target_path })
 				print("Compiling textmate module...")
-				vim.fn.system { "make", "build", "-C", target_path }
+				vim.fn.system({ "make", "build", "-C", target_path })
 				print("Done. Restart neovim.")
 			end, 500)
 		end,
@@ -280,13 +282,13 @@ local function txmt_on_text_changed_i()
 			if diff > 0 then
 				changed_lines = diff
 				for nr = 0, diff, 1 do
-					module.highlight_add_block(nr - 1)
+					module.highlight_add_block(nr)
 				end
 			end
 			if diff < 0 then
 				changed_lines = -diff
 				for nr = 0, -diff, 1 do
-					module.highlight_remove_block(nr - 1)
+					module.highlight_remove_block(nr)
 				end
 			end
 		end
@@ -338,7 +340,7 @@ local function txmt_set_theme(opts)
 	loaded_theme = nil
 
 	load_theme()
-	
+
 	txmt_deferred_highlight_current_buffer()
 end
 
@@ -367,7 +369,7 @@ api.nvim_create_user_command("TextMateTheme", txmt_set_theme, {
 	complete = txmt_on_set_theme_complete,
 })
 
---vim.cmd('syn off')
+-- vim.cmd('syn off')
 txmt_highlight_initialize()
 
 return {

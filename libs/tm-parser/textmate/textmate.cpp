@@ -596,7 +596,6 @@ Textmate::run_highlighter(char *_text, language_info_ptr lang, theme_ptr theme,
   }
 
   int idx = 0;
-  if (!span_infos) {
   for (int i = 0; i < l && i < MAX_STYLED_SPANS; i++) {
     textstyle_t _ts = construct_style(spans, i);
     textstyle_t *prev = NULL;
@@ -618,7 +617,6 @@ Textmate::run_highlighter(char *_text, language_info_ptr lang, theme_ptr theme,
     } else {
       textstyle_buffer.push_back(_ts);
     }
-  }
   }
 
   if (!block) return textstyle_buffer;
