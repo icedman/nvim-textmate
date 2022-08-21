@@ -1,6 +1,6 @@
-all: build install
+all: prebuild build install
 
-.PHONY: build install
+.PHONY: prebuild build install
 
 prebuild:
 	cd libs/jsoncpp && ./amalgamate.py

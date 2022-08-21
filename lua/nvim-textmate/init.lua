@@ -55,7 +55,7 @@ local debug_scopes = false
 local custom_scope_map = nil
 local extension_paths = {
 	"~/.vscode/extensions/",
-	"~/.editor/extensions/"
+	"~/.config/nvim/lua/nvim-textmate/extensions/"
 }
 
 local function load_theme()
@@ -157,7 +157,13 @@ local function txmt_set_language()
 	-- should exclude?
 
 	if not buffer_data[b]["langid"] then
-		local langid = module.highlight_load_language(vim.fn.expand("%"))
+		local langid
+		local ext = buffer_data[b]["extension"]
+		if ext then
+			langid = module.highlight_load_language("file" .. ext)
+		else
+			langid = module.highlight_load_language(vim.fn.expand("%"))
+		end
 		buffer_data[b]["langid"] = langid
 		vim.defer_fn(function()
 			_txmt_highlight_current_buffer()
@@ -401,7 +407,6 @@ local function txmt_disable()
 		enabled = false
 		override_colorscheme = false
 
-		-- todo .. do for every open buffer
 		for b, v in pairs(buffer_data) do
 			txmt_free_buffer(b)
 		end
@@ -418,7 +423,27 @@ local function txmt_toggle()
 	end
 end
 
-local function txmt_set_theme(opts)
+local themes = nil
+local themes_map = {}
+local function txmt_on_set_themes_complete(opts)
+	if not themes then
+		themes = module.highlight_themes()
+	end
+
+	local l = {}
+	for i, theme in ipairs(themes) do
+		l[i] = theme[1]
+		themes_map[theme[1]] = theme
+	end
+
+	if not l then
+		return { "Monokai" }
+	end
+
+	return l
+end
+
+local function txmt_select_theme(opts)
 	override_colorscheme = true
 	theme_name = opts.args
 	loaded_theme = nil
@@ -428,22 +453,31 @@ local function txmt_set_theme(opts)
 	txmt_deferred_highlight_current_buffer()
 end
 
-local themes = nil
-local function txmt_on_set_theme_complete()
-	if not themes then
-		themes = module.highlight_themes()
+local languages = nil
+local languages_map = {}
+local function txmt_on_set_languages_complete()
+	if not languages then
+		languages = module.highlight_languages()
 	end
 
 	local l = {}
-	for i, theme in ipairs(themes) do
-		l[i] = theme[1]
-	end
-
-	if not l then
-		return { "Monokai" }
+	for i, lang in ipairs(languages) do
+		l[i] = lang[1]
+		languages_map[lang[1]] = lang
 	end
 
 	return l
+end
+
+local function txmt_select_language(opts)
+	local b = api.nvim_get_current_buf()
+
+	txmt_free_buffer(b)
+	buffer_data[b] = {
+		extension = languages_map[opts.args][3]
+	}
+
+	txmt_highlight_current_buffer()
 end
 
 local function txmt_debug_scopes()
@@ -462,17 +496,18 @@ api.nvim_create_autocmd("CursorMoved", { group = group, callback = txmt_on_curso
 api.nvim_create_autocmd("CursorMovedI", { group = group, callback = txmt_on_cursor_moved })
 
 api.nvim_create_user_command("TxMtToggle", txmt_toggle, { bang = true, desc = "toggle textmate syntax highlighter" })
-
 api.nvim_create_user_command("TxMtEnable", txmt_enable, { bang = true, desc = "enable textmate syntax highlighter" })
-
 api.nvim_create_user_command("TxMtDisable", txmt_disable, { bang = true, desc = "disable textmate syntax highlighter" })
-
 api.nvim_create_user_command(
 	"TxMtTheme",
-	txmt_set_theme,
-	{ bang = true, nargs = 1, desc = "set textmate theme", complete = txmt_on_set_theme_complete }
+	txmt_select_theme,
+	{ bang = true, nargs = 1, desc = "set textmate theme", complete = txmt_on_set_themes_complete }
 )
-
+api.nvim_create_user_command(
+	"TxMtLanguage",
+	txmt_select_language,
+	{ bang = true, nargs = 1, desc = "set textmate theme", complete = txmt_on_set_languages_complete }
+)
 api.nvim_create_user_command(
 	"TxMtDebugScopes",
 	txmt_debug_scopes,

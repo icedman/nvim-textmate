@@ -161,6 +161,7 @@ struct Textmate {
   static theme_ptr theme();
   static int set_theme(int id);
   static std::vector<list_item_t> theme_extensions();
+  static std::vector<list_item_t> grammar_extensions();
   static bool has_running_threads();
 
   static char* language_definition(int langId);

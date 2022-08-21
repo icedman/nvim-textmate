@@ -158,8 +158,8 @@ std::vector<list_item_t> Textmate::theme_extensions()
       Json::Value themes = ext.package["contributes"]["themes"];
       for (int i = 0; i < themes.size(); i++) {
             list_item_t item = {
+                .name = ext.package["id"].asString(),
                 .description = ext.package["description"].asString(),
-                .icon = ext.package["id"].asString(),
                 .value = ext.path + "/" + themes[i]["path"].asString()
             };
 
@@ -183,6 +183,44 @@ std::vector<list_item_t> Textmate::theme_extensions()
 
             res.push_back(item);
       }
+  }
+  return res;
+}
+
+std::vector<list_item_t> Textmate::grammar_extensions()
+{
+  std::vector<list_item_t> res;
+  for(auto ext : extensions) {
+      if (!ext.hasGrammars)
+          continue;
+
+        Json::Value contribs = ext.package["contributes"];
+        if (!contribs.isMember("languages") || !contribs.isMember("grammars")) {
+            continue;
+        }
+        Json::Value langs = contribs["languages"];
+        for (int i = 0; i < langs.size(); i++) {
+            Json::Value lang = langs[i];
+            if (!lang.isMember("id")) {
+                continue;
+            }
+
+            if (lang.isMember("extensions")) {
+                Json::Value exts = lang["extensions"];
+                for (int j = 0; j < exts.size(); j++) {
+                    Json::Value ex = exts[j];
+                    list_item_t item = {
+                        .name = lang["id"].asString(),
+                        .description = ext.package["description"].asString(),
+                        .value = ex.asString()
+                    };
+                    res.push_back(item);
+                    break;
+
+                }
+            }
+
+        }
   }
   return res;
 }

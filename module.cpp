@@ -231,6 +231,27 @@ int highlight_themes(lua_State *L) {
   return 1;
 }
 
+int highlight_languages(lua_State *L) {
+  std::vector<list_item_t> items = Textmate::grammar_extensions();
+  lua_newtable(L);
+
+  int row = 1;
+  for (auto r : items) {
+    int col = 1;
+    lua_newtable(L);
+    lua_pushstring(L, r.name.c_str());
+    lua_rawseti(L, -2, col++);
+    lua_pushstring(L, r.description.c_str());
+    lua_rawseti(L, -2, col++);
+    lua_pushstring(L, r.value.c_str());
+    lua_rawseti(L, -2, col++);
+
+    lua_rawseti(L, -2, row++);
+  }
+
+  return 1;
+}
+
 int highlight_theme_info(lua_State *L) {
   lua_newtable(L);
 
@@ -334,5 +355,8 @@ EXPORT int luaopen_textmate(lua_State *L) {
   lua_setfield(L, -2, "highlight_themes");
   lua_pushcfunction(L, highlight_theme_info);
   lua_setfield(L, -2, "highlight_theme_info");
+
+  lua_pushcfunction(L, highlight_languages);
+  lua_setfield(L, -2, "highlight_languages");
   return 1;
 }
