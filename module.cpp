@@ -191,11 +191,13 @@ int highlight_add_block(lua_State *L) {
   int docid = lua_tonumber(L, -1);
 
   linenr -= 1;
+  if (linenr < 0) return 1;
 
   if (docs.find(docid) == docs.end()) {
     return 1;
   }
 
+  // log("add %d %d", docid, linenr);
   docs[docid]->add_block_at(linenr);
   return 1;
 }
@@ -205,12 +207,14 @@ int highlight_remove_block(lua_State *L) {
   int docid = lua_tonumber(L, -1);
 
   linenr -= 1;
+  if (linenr < 0) return 1;
 
   if (docs.find(docid) == docs.end()) {
     return 1;
   }
 
   docs[docid]->remove_block_at(linenr);
+  // log("remove %d %d", docid, linenr);
   return 1;
 }
 

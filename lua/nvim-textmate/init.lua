@@ -380,13 +380,13 @@ local function txmt_on_text_changed_i()
 			if diff > 0 then
 				changed_lines = diff
 				for nr = 0, diff, 1 do
-					module.highlight_add_block(nr)
+					module.highlight_add_block(nr, b)
 				end
 			end
 			if diff < 0 then
 				changed_lines = -diff
 				for nr = 0, -diff, 1 do
-					module.highlight_remove_block(nr)
+					module.highlight_remove_block(nr, b)
 				end
 			end
 		end
