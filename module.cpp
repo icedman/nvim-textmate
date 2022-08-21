@@ -17,8 +17,8 @@ static bool has_running_threads = false;
 
 /* paramaters
  * nvim.lua buffer lines are 1-based
- * every reference to a buffer line number passed to these function must be 1-based
- * textmate parser lines are 0-based ... subtract here..
+ * every reference to a buffer line number passed to these function must be
+ * 1-based textmate parser lines are 0-based ... subtract here..
  */
 
 int highlight_is_line_dirty(lua_State *L) {
@@ -63,6 +63,25 @@ int highlight_make_line_dirty(lua_State *L) {
     block->make_dirty();
   }
 
+  return 1;
+}
+
+// check and add at every highlight call
+// int highlight_line_add_doc(lua_State *L)
+// {
+//   int docid = lua_tonumber(L, -1);
+//   if (docs.find(docid) == docs.end()) {
+//     doc = std::make_shared<doc_data_t>();
+//     docs[docid] = doc;
+//   }
+// }
+
+int highlight_remove_doc(lua_State *L) {
+  int docid = lua_tonumber(L, -1);
+  auto it = docs.find(docid);
+  if (it != docs.end()) {
+    docs.erase(it);
+  }
   return 1;
 }
 
@@ -304,6 +323,8 @@ EXPORT int luaopen_textmate(lua_State *L) {
   lua_pushcfunction(L, highlight_make_line_dirty);
   lua_setfield(L, -2, "highlight_make_line_dirty");
 
+  lua_pushcfunction(L, highlight_remove_doc);
+  lua_setfield(L, -2, "highlight_remove_doc");
   lua_pushcfunction(L, highlight_add_block);
   lua_setfield(L, -2, "highlight_add_block");
   lua_pushcfunction(L, highlight_remove_block);

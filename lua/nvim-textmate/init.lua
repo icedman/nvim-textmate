@@ -42,8 +42,8 @@ local hl_timeout_next_tick = 0
 local hl_timeout_after_change = 150
 local hl_timeout_after_language_load = 1500
 
+local enabled = false
 local group = api.nvim_create_augroup("textmate", { clear = true })
-local enabled = true
 local loaded_theme = nil
 local _txmt_highlight_current_buffer
 
@@ -51,6 +51,12 @@ local _txmt_highlight_current_buffer
 local quick_load = false
 local theme_name = "Monokai"
 local override_colorscheme = false
+local debug_scopes = false
+local custom_scope_map = nil
+local extension_paths = {
+	"~/.vscode/extensions/",
+	"~/.editor/extensions/"
+}
 
 local function load_theme()
 	if not override_colorscheme then
@@ -98,25 +104,41 @@ local function load_theme()
 	api.nvim_set_hl(0, "Struct", { fg = strct_fg })
 	api.nvim_set_hl(0, "Structure", { fg = strct_fg })
 	api.nvim_set_hl(0, "StorageClass", { fg = strct_fg })
-	--api.nvim_set_hl(0, "Conditional", { fg = ctrl_fg })
 end
 
 local function setup(parameters)
 	quick_load = parameters["quick_load"]
-	theme_name = parameters["theme_name"]
+	debug_scopes = parameters["debug_scopes"]
+	custom_scope_map = parameters["custom_scope_map"]
 	override_colorscheme = parameters["override_colorscheme"]
+	
+	if parameters["theme_name"] then
+		theme_name = parameters["theme_name"]
+	end
+	if parameters["extension_paths"] then
+		extension_paths = parameters["extension_paths"]
+	end
+
 	load_theme()
 end
 
-local function txmt_highlight_initialize()
-	local homedir = vim.fn.expand("~")
-	module.highlight_set_extensions_dir(homedir .. "/.editor/extensions/")
-	module.highlight_set_extensions_dir(homedir .. "/.vscode/extensions/")
+local function txmt_initialize()
+	for i, ex in ipairs(extension_paths) do
+		module.highlight_set_extensions_dir(vim.fn.expand(ex))
+	end
 	module.highlight_set_extensions_dir(info.source:gsub("init.lua", "extensions/"):gsub("@", ""))
 end
 
+local function txmt_free_buffer(b)
+	if buffer_data and buffer_data[b] then
+		api.nvim_buf_clear_namespace(b, 0, 0, -1)
+		buffer_data[b] = nil
+	end
+	module.highlight_remove_doc(b)
+end
+
 local function txmt_set_language()
-	if enabled ~= true then
+	if not enabled then
 		return false
 	end
 
@@ -151,23 +173,32 @@ local function txmt_set_language()
 end
 
 local function txmt_highlight_current_line(n, l)
+	if not enabled then
+		return
+	end
+
 	if txmt_set_language() ~= true then
 		return
 	end
 
 	local b = api.nvim_get_current_buf()
-
-	-- if module.highlight_is_line_dirty(n, b) == 0 then
-	-- 	return
-	-- end
+	local r, c = unpack(vim.api.nvim_win_get_cursor(0))
 
 	api.nvim_buf_clear_namespace(b, 0, n - 1, n)
 	local langid = buffer_data[b]["langid"]
 	if langid == -1 then
 		return
 	end
-	local _s = ""
+
 	local t = module.highlight_line(l, n, langid, b)
+
+	if debug_scopes then
+		if not buffer_data[b]["scopes"] then
+			buffer_data[b]["scopes"] = {}
+		end
+		buffer_data[b]["scopes"][n] = t
+	end
+
 	for i, style in ipairs(t) do
 		local start = style[1]
 		local length = style[2]
@@ -175,13 +206,19 @@ local function txmt_highlight_current_line(n, l)
 		local gg = style[4]
 		local bb = style[5]
 		local scope = style[6]
-		-- _s = _s .. start .. " - " .. length .. "; " .. scope .. ";"
 
 		if not override_colorscheme then
 			local hl = nil
 			for j, map in ipairs(scope_hl_map) do
 				if string.find(scope, map[1]) then
 					hl = map[2]
+				end
+			end
+			if custom_scope_map then
+				for j, map in ipairs(custom_scope_map) do
+					if string.find(scope, map[1]) then
+						hl = map[2]
+					end
 				end
 			end
 			if hl then
@@ -195,11 +232,13 @@ local function txmt_highlight_current_line(n, l)
 			end
 		end
 	end
-
-	--print(_s)
 end
 
 local function txmt_highlight_current_buffer()
+	if not enabled then
+		return
+	end
+
 	if txmt_set_language() ~= true then
 		return
 	end
@@ -230,6 +269,10 @@ end
 _txmt_highlight_current_buffer = txmt_highlight_current_buffer
 
 local function txmt_deferred_highlight_current_buffer(timeout)
+	if not enabled then
+		return
+	end
+
 	if render_timer ~= nil then
 		render_timer:close()
 	end
@@ -245,8 +288,10 @@ local function txmt_deferred_highlight_current_buffer(timeout)
 end
 
 local function txmt_on_buf_enter()
-	-- local b = api.nvim_get_current_buf()
-	-- local lc = api.nvim_buf_line_count(b)
+	if not enabled then
+		return
+	end
+
 	if quick_load then
 		txmt_deferred_highlight_current_buffer(hl_timeout_next_tick)
 	else
@@ -255,17 +300,47 @@ local function txmt_on_buf_enter()
 end
 
 local function txmt_on_buf_delete()
-	-- delete doc at module.cpp
-	-- delete doc at docs
-	-- print('delete' .. api.nvim_get_current_buf())
+	local b = api.nvim_get_current_buf()
+	txmt_free_buffer(b)
 end
 
 local function txmt_on_cursor_moved()
+	if not enabled then
+		return
+	end
+
 	txmt_highlight_current_buffer()
+
+	if debug_scopes then
+		local b = api.nvim_get_current_buf()
+		if not buffer_data[b] then
+			return
+		end
+		local r, c = unpack(vim.api.nvim_win_get_cursor(0))
+		local scopes = buffer_data[b]["scopes"]
+		if scopes then
+			local t = scopes[r]
+			if t then
+				for i, style in ipairs(t) do
+					local start = style[1]
+					local length = style[2]
+					local scope = style[6]
+					if c >= start and c < start + length then
+						print(scope)
+					end
+				end
+			end
+		end
+	end
+
 	-- txmt_deferred_highlight_current_buffer()
 end
 
 local function txmt_on_text_changed_i()
+	if not enabled then
+		return
+	end
+
 	local b = api.nvim_get_current_buf()
 	local r, c = unpack(vim.api.nvim_win_get_cursor(0))
 	local i = r - 1
@@ -314,25 +389,34 @@ local function txmt_on_text_changed()
 	end, 150)
 end
 
-api.nvim_create_autocmd("BufEnter", { group = group, callback = txmt_on_buf_enter })
-api.nvim_create_autocmd("BufDelete", { group = group, callback = txmt_on_buf_delete })
-api.nvim_create_autocmd("TextChangedI", { group = group, callback = txmt_on_text_changed_i })
-api.nvim_create_autocmd("TextChanged", { group = group, callback = txmt_on_text_changed })
-api.nvim_create_autocmd("CursorMoved", { group = group, callback = txmt_on_cursor_moved })
-
-local function txmt_toggle()
-	if enabled then
-		enabled = false
-	else
+local function txmt_enable()
+	if not enabled then
 		enabled = true
+		txmt_deferred_highlight_current_buffer()
 	end
 end
 
-api.nvim_create_user_command(
-	"TextMateToggle",
-	txmt_toggle,
-	{ bang = true, desc = "toggle textmate syntax highlighter" }
-)
+local function txmt_disable()
+	if enabled then
+		enabled = false
+		override_colorscheme = false
+
+		-- todo .. do for every open buffer
+		for b, v in pairs(buffer_data) do
+			txmt_free_buffer(b)
+		end
+
+		vim.cmd("colorscheme " .. vim.g.colors_name)
+	end
+end
+
+local function txmt_toggle()
+	if enabled then
+		txmt_disable()
+	else
+		txmt_enable()
+	end
+end
 
 local function txmt_set_theme(opts)
 	override_colorscheme = true
@@ -362,15 +446,42 @@ local function txmt_on_set_theme_complete()
 	return l
 end
 
-api.nvim_create_user_command("TextMateTheme", txmt_set_theme, {
-	bang = true,
-	nargs = 1,
-	desc = "set textmate theme",
-	complete = txmt_on_set_theme_complete,
+local function txmt_debug_scopes()
+	debug_scopes = not debug_scopes
+	if debug_scopes then
+		txmt_disable()
+		txmt_enable()
+	end
+end
+
+api.nvim_create_autocmd("BufEnter", { group = group, callback = txmt_on_buf_enter })
+api.nvim_create_autocmd("BufDelete", { group = group, callback = txmt_on_buf_delete })
+api.nvim_create_autocmd("TextChangedI", { group = group, callback = txmt_on_text_changed_i })
+api.nvim_create_autocmd("TextChanged", { group = group, callback = txmt_on_text_changed })
+api.nvim_create_autocmd("CursorMoved", { group = group, callback = txmt_on_cursor_moved })
+api.nvim_create_autocmd("CursorMovedI", { group = group, callback = txmt_on_cursor_moved })
+
+api.nvim_create_user_command("TxMtToggle", txmt_toggle, { bang = true, desc = "toggle textmate syntax highlighter" })
+
+api.nvim_create_user_command("TxMtEnable", txmt_enable, { bang = true, desc = "enable textmate syntax highlighter" })
+
+api.nvim_create_user_command("TxMtDisable", txmt_disable, { bang = true, desc = "disable textmate syntax highlighter" })
+
+api.nvim_create_user_command(
+	"TxMtTheme",
+	txmt_set_theme,
+	{ bang = true, nargs = 1, desc = "set textmate theme", complete = txmt_on_set_theme_complete }
+)
+
+api.nvim_create_user_command(
+	"TxMtDebugScopes",
+	txmt_debug_scopes,
+	{ bang = true,
+	desc = "debug textmate scopes"
 })
 
--- vim.cmd('syn off')
-txmt_highlight_initialize()
+txmt_initialize()
+txmt_enable()
 
 return {
 	setup = setup,

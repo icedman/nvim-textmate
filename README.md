@@ -41,6 +41,9 @@ require('textmate').setup({
 * quick_load - defers loading of grammar and theme at the opening of a buffer 
 * theme_name - select a textmate format or vscode compatible theme
 * override_colorscheme - apply colorscheme from textmate theme
+* custom_scope_map - add more scope to namespace mapping (see colormap.lua)
+* extension_paths - set vscode extension search path
+* debug_scopes - print scope name under cursor
 
 # extensions
 
@@ -54,8 +57,10 @@ Copy vscode theme and grammar extensions to any of these directories:
 
 # commands
 
-* TextMateToggle
-* TextMateTheme Dracula
+* TxMtEnable
+* TxMtDisable
+* TxMtToggle
+* TxMtTheme Dracula
 
 # known issues
 
