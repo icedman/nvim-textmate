@@ -42,7 +42,7 @@ local hl_timeout_next_tick = 0
 local hl_timeout_after_change = 150
 local hl_timeout_after_language_load = 1500
 
-local enabled = false
+local enabled = true
 local group = api.nvim_create_augroup("textmate", { clear = true })
 local loaded_theme = nil
 local _txmt_highlight_current_buffer
@@ -392,7 +392,7 @@ end
 local function txmt_enable()
 	if not enabled then
 		enabled = true
-		txmt_deferred_highlight_current_buffer()
+		txmt_highlight_current_buffer()
 	end
 end
 
@@ -481,7 +481,6 @@ api.nvim_create_user_command(
 })
 
 txmt_initialize()
-txmt_enable()
 
 return {
 	setup = setup,

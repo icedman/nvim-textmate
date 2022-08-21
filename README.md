@@ -60,7 +60,8 @@ Copy vscode theme and grammar extensions to any of these directories:
 * TxMtEnable
 * TxMtDisable
 * TxMtToggle
-* TxMtTheme Dracula
+* TxMtTheme
+* TxMtDebugScopes
 
 # known issues
 
