@@ -94,9 +94,13 @@ int highlight_line(lua_State *L) {
   doc_data_ptr doc;
 
   if (docs.find(docid) == docs.end()) {
-    doc = std::make_shared<doc_data_t>();
-    docs[docid] = doc;
+    docs[docid] = std::make_shared<doc_data_t>();
+    // docs[docid] = doc;
   }
+
+  // log(">>%d %d %d", linenr, langid, docid);
+  // lua_newtable(L);
+  // return 1;
 
   doc = docs[docid];
 
