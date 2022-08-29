@@ -21,7 +21,7 @@ use "icedman/nvim-textmate"
 
 ```lua
 -- init.lua
-require('textmate')
+require('nvim-textmate')
 ```
 
 <br/>
@@ -29,7 +29,7 @@ require('textmate')
 
 
 ```lua
-require('textmate').setup({
+require('nvim-textmate').setup({
     quick_load = true,
     theme_name = 'Dracula',
     override_colorscheme = false
