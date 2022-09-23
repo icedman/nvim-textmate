@@ -106,6 +106,20 @@ local function load_theme()
 	api.nvim_set_hl(0, "StorageClass", { fg = strct_fg })
 end
 
+local function txmt_initialize()
+	for i, ex in ipairs(extension_paths) do
+		module.highlight_set_extensions_dir(vim.fn.expand(ex))
+	end
+	module.highlight_set_extensions_dir(info.source:gsub("init.lua", "extensions/"):gsub("@", ""))
+end
+
+local function normalize_path(path)
+	if vim.endswith(path, "/") then
+		return path
+	end
+	return path .. "/"
+end
+
 local function setup(parameters)
 	quick_load = parameters["quick_load"]
 	debug_scopes = parameters["debug_scopes"]
@@ -115,18 +129,13 @@ local function setup(parameters)
 	if parameters["theme_name"] then
 		theme_name = parameters["theme_name"]
 	end
-	-- if parameters["extension_paths"] then
-	-- 	extension_paths = parameters["extension_paths"]
-	-- end
 
-	load_theme()
-end
-
-local function txmt_initialize()
-	for i, ex in ipairs(extension_paths) do
-		module.highlight_set_extensions_dir(vim.fn.expand(ex))
+	if parameters["extension_paths"] then
+		vim.list_extend(extension_paths, vim.tbl_map(normalize_path, parameters["extension_paths"]))
 	end
-	module.highlight_set_extensions_dir(info.source:gsub("init.lua", "extensions/"):gsub("@", ""))
+
+	txmt_initialize()
+	load_theme()
 end
 
 local function txmt_free_buffer(b)
@@ -533,8 +542,6 @@ api.nvim_create_user_command(
 )
 api.nvim_create_user_command("TxMtDebugScopes", txmt_debug_scopes, { bang = true, desc = "debug textmate scopes" })
 api.nvim_create_user_command("TxMtInfo", txmt_info, { bang = true, desc = "textmate info" })
-
-txmt_initialize()
 
 return {
 	setup = setup,
