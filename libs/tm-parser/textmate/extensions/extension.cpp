@@ -348,19 +348,19 @@ language_from_file(const std::string path,
             }
 
             bool found = false;
-            // if (lang.isMember("filenames")) {
-            //     Json::Value fns = lang["filenames"];
-            //     for (int j = 0; j < fns.size(); j++) {
-            //         Json::Value fn = fns[j];
-            //         if (fn.asString() == fileName) {
-            //             resolvedExtension = ext;
-            //             resolvedLanguage = lang["id"].asString();
-            //             resolvedGrammars = contribs["grammars"];
-            //             found = true;
-            //             break;
-            //         }
-            //     }
-            // }
+            if (lang.isMember("filenames")) {
+                Json::Value fns = lang["filenames"];
+                for (int j = 0; j < fns.size(); j++) {
+                    Json::Value fn = fns[j];
+                    if (fn.asString() == fileName) {
+                        resolvedExtension = ext;
+                        resolvedLanguage = lang["id"].asString();
+                        resolvedGrammars = contribs["grammars"];
+                        found = true;
+                        break;
+                    }
+                }
+            }
 
             if (!found && lang.isMember("extensions")) {
                 Json::Value exts = lang["extensions"];
@@ -410,11 +410,11 @@ language_from_file(const std::string path,
             if (foundGrammar) {
                 std::string path = resolvedExtension.path + "/" + g["path"].asString();
 
-                log("grammar: %s\n", path.c_str());
                 log("grammar: %s", path.c_str());
                 log("extension: %s", resolvedExtension.path.c_str());
 
-                lang->grammar = parse::parse_grammar(load_plist_or_json(path));
+                std::string grammar_path = path;
+                lang->grammar = parse::parse_grammar(load_plist_or_json(grammar_path));
                 lang->id = resolvedLanguage;
 
                 // language configuration
@@ -425,6 +425,8 @@ language_from_file(const std::string path,
                 }
 
                 load_language_configuration(path, lang);
+                lang->definition["name"] = resolvedLanguage;
+                lang->definition["path"] = grammar_path;
 
                 log("language configuration: %s", path.c_str());
                 // std::cout << "langauge matched" << lang->id << std::endl;
