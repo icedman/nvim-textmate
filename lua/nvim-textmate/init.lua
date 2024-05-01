@@ -38,7 +38,7 @@ local changed_timer = nil
 local buffer_data = {}
 
 local hl_default_timeout = 50
-local hl_timeout_next_tick = 0
+local hl_timeout_next_tick = 1
 local hl_timeout_after_change = 150
 local hl_timeout_after_language_load = 1500
 

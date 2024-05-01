@@ -5,6 +5,7 @@ local scope_hl_map = {
 	{ "constant.numeric", "Number" },
 	{ "constant.character", "Character" },
 	{ "primitive", "Boolean" },
+	{ "variable", "StorageClass" },
 	{ "keyword", "Define" },
 	{ "declaration", "Conditional" },
 	{ "control", "Conditional" },
@@ -15,7 +16,7 @@ local scope_hl_map = {
 	{ "function", "Function" },
 	{ "struct", "Structure" },
 	{ "class", "Structure" },
-	{ "modifier", "StorageClass" },
+	{ "modifier", "Boolean" },
 	{ "namespace", "StorageClass" },
 	{ "scope", "StorageClass" },
 	{ "name.type", "Variable" },
@@ -26,6 +27,9 @@ local scope_hl_map = {
 	{ "heading", "markdownH1" },
 	{ "string", "String" },
 	{ "string.other", "Label" },
+	{ "punctuation", "Label" },
+--	{ "bold", "Bold" },
+--	{ "italic", "italic" },
 	{ "comment", "Comment" },
 }
 
