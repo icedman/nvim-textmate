@@ -1,5 +1,15 @@
-# nvim-textmate
-A textmate-based syntax highlighter to nvim, compatible with VScode themes and grammars
+<br/>
+<p align="center">
+  <h3 align="center">nvim-textmate</h3>
+
+  <p align="center">
+    A textmate-based syntax highlighter to nvim, compatible with VScode themes and grammars
+    <br/>
+    <br/>
+  </p>
+</p>
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/icedman)
 
 ![Screen Shot](https://raw.githubusercontent.com/icedman/nvim-textmate/main/screenshots/Screenshot%20from%202022-08-18%2010-15-03.png)
 

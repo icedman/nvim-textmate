@@ -1,2 +1,7 @@
 build/*
 **/*.so
+**/*.a
+*.cmake
+nvim-textmate/*
+CMakeCache.txt
+CMakeFiles
