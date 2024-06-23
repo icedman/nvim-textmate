@@ -3,7 +3,6 @@ all: prebuild build install
 .PHONY: prebuild build install
 
 prebuild:
-	cd libs/jsoncpp && ./amalgamate.py
 	cd libs/Onigmo && ./autogen.sh && ./configure
 
 build:
