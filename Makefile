@@ -3,11 +3,12 @@ all: prebuild build install
 .PHONY: prebuild build install
 
 prebuild:
+	cd libs/jsoncpp && ./amalgamate.py
 	cd libs/Onigmo && ./autogen.sh && ./configure
 
 build:
 	mkdir -p build
-	cd build && cmake ../cmake && make
+	cd build && cmake ../cmake && cmake --build .
 	cp build/textmate.so ./lua/nvim-textmate/
 
 install:
