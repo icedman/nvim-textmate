@@ -5,7 +5,7 @@ local scope_hl_map = {
 	{ "constant.numeric", "Number" },
 	{ "constant.character", "Character" },
 	{ "primitive", "Boolean" },
-	{ "variable", "StorageClass" },
+	{ "variable", "Variable" },
 	{ "keyword", "Define" },
 	{ "declaration", "Conditional" },
 	{ "control", "Conditional" },
